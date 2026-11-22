@@ -437,7 +437,7 @@
     }
 
   }
-//@ sourceURL=/vue/info.vue
+//@ sourceURL=/vue/config.vue
 </script>
 
 <style scoped>

@@ -216,7 +216,7 @@
       clearInterval(this.timer);
     }
   }
-//@ sourceURL=/vue/gpioDoctor.vue
+//@ sourceURL=/vue/gpio-finder.vue
 </script>
 
 <style scoped>

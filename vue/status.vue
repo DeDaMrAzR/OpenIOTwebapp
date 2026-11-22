@@ -444,7 +444,7 @@ if(false)
     }
 
   }
-//@ sourceURL=/vue/control.vue
+//@ sourceURL=/vue/status.vue
 </script>
 
 <style scoped>

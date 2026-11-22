@@ -30,13 +30,14 @@ window.onload = ()=>{
     window.components = [
         { name:'ota', path: window.root+'vue/ota.vue'+unique },
         { name:'filesystem', path: window.root+'vue/filesystem.vue'+unique },
-        { name:'info', path: window.root+'vue/info.vue'+unique },
+        { name:'config', path: window.root+'vue/config.vue'+unique },
         { name:'flash', path: window.root+'vue/flash.vue'+unique },
-        { name:'control', path: window.root+'vue/control.vue'+unique },
+        { name:'status', path: window.root+'vue/status.vue'+unique },
         { name:'tools', path: window.root+'vue/tools.vue'+unique },
         { name:'import', path: window.root+'vue/import.vue'+unique },
         { name:'logs', path: window.root+'vue/logs.vue'+unique },
-        { name:'gpioDoctor', path: window.root+'vue/gpioDoctor.vue'+unique },
+        { name:'gpio-finder', path: window.root+'vue/gpio-finder.vue'+unique },
+        { name:'about', path: window.root+'vue/about.vue'+unique },
         { name:'myComponent', path: window.root+'vue/myComponent.vue'+unique },
     ];
 
