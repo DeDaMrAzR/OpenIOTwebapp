@@ -16,7 +16,7 @@ The bundled Vue.js header identifies version 2.6.14, copyright 2014-2021 Evan Yo
 and the MIT License.
 
 OpenIOT-authored contributions and modifications use
-[CC BY 4.0](LICENSE). This license applies only to those contributions, not to
+[CC BY 4.0](LICENSE.md). This license applies only to those contributions, not to
 inherited application code or third-party libraries. The imported snapshot did not
 contain a general application-source license; existing upstream notices and
 applicable terms are preserved.

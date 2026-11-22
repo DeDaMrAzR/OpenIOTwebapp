@@ -75,7 +75,7 @@ third-party notices.
 ## License
 
 OpenIOT-authored contributions and modifications are licensed under
-[Creative Commons Attribution 4.0 International (CC BY 4.0)](LICENSE).
+[Creative Commons Attribution 4.0 International (CC BY 4.0)](LICENSE.md).
 This does not relicense inherited application code or bundled third-party libraries;
 their existing notices and applicable upstream terms remain in effect. A general
 license for the inherited application source was not found in the imported snapshot.
