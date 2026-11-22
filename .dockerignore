@@ -1,0 +1,10 @@
+**
+!Dockerfile
+!nginx.conf
+!startup.js
+!templateParser.js
+!tuyaExporter.js
+!lib/
+!lib/*.js
+!vue/
+!vue/*.vue
