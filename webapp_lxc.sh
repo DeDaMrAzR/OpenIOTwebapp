@@ -176,19 +176,6 @@ ip link show dev "$BRIDGE" >/dev/null || die "Bridge not found: $BRIDGE"
 # This checks the cluster-wide ID namespace, including VMs and other nodes.
 pvesh get /cluster/nextid --vmid "$CTID" >/dev/null
 
-printf '\nCT %s (%s), unprivileged with nesting enabled for systemd; %s CPU, %s MiB RAM, %s GiB on %s\n' \
-    "$CTID" "$CT_HOSTNAME" "$CORES" "$MEMORY" "$DISK_GB" "$STORAGE"
-printf 'Network: %s, %s; gateway=%s VLAN=%s DNS=%s; port=%s; onboot=%s\n' \
-    "$BRIDGE" "$IP" "${GATEWAY:-default}" "${VLAN:-none}" "${NAMESERVER:-inherited}" "$WEBAPP_PORT" "$ONBOOT"
-printf 'Template: %s; source: %s\n' "${TEMPLATE:-auto Debian $DEBIAN_VERSION on $TEMPLATE_STORAGE}" "${SOURCE_DIR:-GitHub DeDaMrAzR/OpenIOTwebapp ref $WEBAPP_REF}"
-printf 'Installation downloads source/template as needed and installs packages inside the new CT.\n'
-if [[ "$CONFIRM" != yes ]]; then
-    [[ "$INTERACTIVE" == 1 && -r /dev/tty && -w /dev/tty ]] || die 'Use an interactive terminal, or set CONFIRM=yes for unattended installation.'
-    printf 'Create this container? [y/N]: ' > /dev/tty
-    read -r answer < /dev/tty || die 'Input closed.'
-    [[ "$answer" == y || "$answer" == Y ]] || die 'Cancelled; no container created.'
-fi
-
 root_password_set=0
 if [[ "$INTERACTIVE" == 1 && -r /dev/tty && -w /dev/tty ]]; then
     set +x
@@ -208,6 +195,19 @@ if [[ "$INTERACTIVE" == 1 && -r /dev/tty && -w /dev/tty ]]; then
         unset root_password root_password_confirm
         printf 'Passwords must be nonempty and match. Try again.\n' > /dev/tty
     done
+fi
+
+printf '\nCT %s (%s), unprivileged with nesting enabled for systemd; %s CPU, %s MiB RAM, %s GiB on %s\n' \
+    "$CTID" "$CT_HOSTNAME" "$CORES" "$MEMORY" "$DISK_GB" "$STORAGE"
+printf 'Network: %s, %s; gateway=%s VLAN=%s DNS=%s; port=%s; onboot=%s\n' \
+    "$BRIDGE" "$IP" "${GATEWAY:-default}" "${VLAN:-none}" "${NAMESERVER:-inherited}" "$WEBAPP_PORT" "$ONBOOT"
+printf 'Template: %s; source: %s\n' "${TEMPLATE:-auto Debian $DEBIAN_VERSION on $TEMPLATE_STORAGE}" "${SOURCE_DIR:-GitHub DeDaMrAzR/OpenIOTwebapp ref $WEBAPP_REF}"
+printf 'Installation downloads source/template as needed and installs packages inside the new CT.\n'
+if [[ "$CONFIRM" != yes ]]; then
+    [[ "$INTERACTIVE" == 1 && -r /dev/tty && -w /dev/tty ]] || die 'Use an interactive terminal, or set CONFIRM=yes for unattended installation.'
+    printf 'Create this container? [y/N]: ' > /dev/tty
+    read -r answer < /dev/tty || die 'Input closed.'
+    [[ "$answer" == y || "$answer" == Y ]] || die 'Cancelled; no container created.'
 fi
 
 if [[ -z "$TEMPLATE" ]]; then
