@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Create a new Proxmox VE LXC serving OpenIOT WebApp. Run as root on a node.
-# Intended for a standard Debian 12 or 13 amd64 template; runtime not yet validated.
+# Intended for a standard Debian 12 or 13 amd64 template.
 #
 # Local invocation: bash ./webapp_lxc.sh
 # Self-contained invocation:
@@ -23,8 +23,9 @@
 # VLAN sets an optional bridge VLAN tag. IPv6 is disabled for this provisioning.
 #
 # The node needs internet for source and possibly a Debian template; the CT needs
-# internet/DNS for packages. The host gets no packages installed. No Docker,
-# nesting, host firewall changes, or automatic WebApp updates are used.
+# internet/DNS for packages. Nesting is enabled for systemd in the unprivileged CT.
+# The host gets no packages installed. No Docker, host firewall changes, or
+# automatic WebApp updates are used.
 # WEBAPP_REF resolves to an immutable commit printed during installation. Pin a
 # full commit SHA to reproduce the same source. SOURCE_DIR copies local files.
 # Only curated assets are served. Existing cluster CT/VM IDs are refused.
@@ -175,7 +176,7 @@ ip link show dev "$BRIDGE" >/dev/null || die "Bridge not found: $BRIDGE"
 # This checks the cluster-wide ID namespace, including VMs and other nodes.
 pvesh get /cluster/nextid --vmid "$CTID" >/dev/null
 
-printf '\nCT %s (%s), unprivileged; %s CPU, %s MiB RAM, %s GiB on %s\n' \
+printf '\nCT %s (%s), unprivileged with nesting enabled for systemd; %s CPU, %s MiB RAM, %s GiB on %s\n' \
     "$CTID" "$CT_HOSTNAME" "$CORES" "$MEMORY" "$DISK_GB" "$STORAGE"
 printf 'Network: %s, %s; gateway=%s VLAN=%s DNS=%s; port=%s; onboot=%s\n' \
     "$BRIDGE" "$IP" "${GATEWAY:-default}" "${VLAN:-none}" "${NAMESERVER:-inherited}" "$WEBAPP_PORT" "$ONBOOT"
@@ -263,7 +264,7 @@ tar -czf "$archive" -- "${assets[@]}"
 network="name=eth0,bridge=$BRIDGE,ip=$IP,ip6=manual"
 [[ -z "$GATEWAY" ]] || network+=",gw=$GATEWAY"
 [[ -z "$VLAN" ]] || network+=",tag=$VLAN"
-create_options=(--hostname "$CT_HOSTNAME" --unprivileged 1 --cores "$CORES"
+create_options=(--hostname "$CT_HOSTNAME" --unprivileged 1 --features nesting=1 --cores "$CORES"
     --memory "$MEMORY" --swap 0 --rootfs "$STORAGE:$DISK_GB"
     --net0 "$network" --onboot "$ONBOOT")
 [[ -z "$NAMESERVER" ]] || create_options+=(--nameserver "$NAMESERVER")
