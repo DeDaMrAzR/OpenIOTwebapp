@@ -69,8 +69,19 @@ CT_HOSTNAME=${CT_HOSTNAME:-openiot-webapp}
 root_stores=$(pvesm status --content rootdir | awk 'NR > 1 && $3 == "active" {print $1}')
 template_stores=$(pvesm status --content vztmpl | awk 'NR > 1 && $3 == "active" {print $1}')
 [[ -n "$root_stores" && -n "$template_stores" ]] || die 'An active rootdir store and an active vztmpl store are required.'
-STORAGE=${STORAGE:-$(printf '%s\n' "$root_stores" | sed -n '1p')}
-TEMPLATE_STORAGE=${TEMPLATE_STORAGE:-$(printf '%s\n' "$template_stores" | sed -n '1p')}
+default_storage() {
+    local available=$1 preferred
+    shift
+    for preferred in "$@"; do
+        if printf '%s\n' "$available" | grep -Fxq -- "$preferred"; then
+            printf '%s\n' "$preferred"
+            return
+        fi
+    done
+    printf '%s\n' "$available" | sed -n '1p'
+}
+STORAGE=${STORAGE:-$(default_storage "$root_stores" local-lvm local)}
+TEMPLATE_STORAGE=${TEMPLATE_STORAGE:-$(default_storage "$template_stores" local)}
 TEMPLATE=${TEMPLATE:-}
 DEBIAN_VERSION=${DEBIAN_VERSION:-12}
 WEBAPP_REF=${WEBAPP_REF:-main}
@@ -94,13 +105,39 @@ ask() {
     read -r answer < /dev/tty || die 'Input closed.'
     [[ -z "$answer" ]] || printf -v "$variable" '%s' "$answer"
 }
+choose_storage() {
+    local variable=$1 label=$2 available=$3 purpose=$4 answer choice index
+    local -a choices
+    mapfile -t choices <<< "$available"
+    printf '\n%s\n%s\n' "$label" "$purpose" > /dev/tty
+    for (( index=0; index<${#choices[@]}; index++ )); do
+        printf '  %s) %s\n' "$(( index + 1 ))" "${choices[index]}" > /dev/tty
+    done
+    while true; do
+        printf 'Choose a number or storage ID [%s]: ' "${!variable}" > /dev/tty
+        read -r answer < /dev/tty || die 'Input closed.'
+        answer=${answer:-${!variable}}
+        for choice in "${choices[@]}"; do
+            if [[ "$answer" == "$choice" ]]; then
+                printf -v "$variable" '%s' "$choice"
+                return
+            fi
+        done
+        if [[ "$answer" =~ ^[1-9][0-9]{0,3}$ ]] && (( answer <= ${#choices[@]} )); then
+            printf -v "$variable" '%s' "${choices[answer-1]}"
+            return
+        fi
+        printf 'Invalid choice. Select one of the storage IDs listed above.\n' > /dev/tty
+    done
+}
 printf '\nOpenIOT WebApp LXC installer\n'
 if [[ "$INTERACTIVE" == 1 && -r /dev/tty && -w /dev/tty ]]; then
-    printf 'Root disk storage options:\n%s\nTemplate storage options:\n%s\n' "$root_stores" "$template_stores"
     ask CTID 'Container ID'
     ask CT_HOSTNAME 'Container hostname'
-    ask STORAGE 'Root disk storage'
-    ask TEMPLATE_STORAGE 'Template storage'
+    choose_storage STORAGE 'Root filesystem storage' "$root_stores" \
+        'Stores the running container disk. Only stores supporting container filesystems are listed.'
+    choose_storage TEMPLATE_STORAGE 'Template archive storage' "$template_stores" \
+        'Stores the downloaded Debian template archive; it can differ from the running container disk storage.'
     ask BRIDGE 'Network bridge'
     ask IP 'IPv4 (dhcp or address/prefix)'
     [[ "$IP" == dhcp ]] || ask GATEWAY 'Gateway'
