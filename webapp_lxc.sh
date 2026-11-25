@@ -11,7 +11,7 @@
 #   CTID=<next free cluster ID> CT_HOSTNAME=openiot-webapp
 #   STORAGE=<active rootdir storage> TEMPLATE_STORAGE=<active template storage>
 #   TEMPLATE=<auto-select installed or download latest matching Debian template>
-#   DEBIAN_VERSION=12 WEBAPP_REF=main
+#   DEBIAN_VERSION=13 WEBAPP_REF=main
 #   BRIDGE=vmbr0 IP=dhcp GATEWAY= VLAN= NAMESERVER=
 #   CORES=1 MEMORY=256 DISK_GB=2 WEBAPP_PORT=6468 ONBOOT=1
 #   SOURCE_DIR=<optional local checkout, otherwise download source from GitHub>
@@ -88,7 +88,7 @@ default_storage() {
 STORAGE=${STORAGE:-$(default_storage "$root_stores" local-lvm local)}
 TEMPLATE_STORAGE=${TEMPLATE_STORAGE:-$(default_storage "$template_stores" local)}
 TEMPLATE=${TEMPLATE:-}
-DEBIAN_VERSION=${DEBIAN_VERSION:-12}
+DEBIAN_VERSION=${DEBIAN_VERSION:-13}
 WEBAPP_REF=${WEBAPP_REF:-main}
 BRIDGE=${BRIDGE:-vmbr0}
 IP=${IP:-dhcp}
