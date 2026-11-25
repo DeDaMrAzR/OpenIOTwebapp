@@ -16,6 +16,9 @@
 #   CORES=1 MEMORY=256 DISK_GB=2 WEBAPP_PORT=6468 ONBOOT=1
 #   SOURCE_DIR=<optional local checkout, otherwise download source from GitHub>
 #   INTERACTIVE=1 CONFIRM=<set yes to accept without an interactive confirmation>
+# Interactive installation asks for a root console password without displaying it.
+# Unattended installation leaves the template's root password unset/locked; use
+# pct enter <CTID> or pct exec <CTID> -- passwd root to configure access later.
 # Static example: IP=192.168.1.120/24 GATEWAY=192.168.1.1
 # VLAN sets an optional bridge VLAN tag. IPv6 is disabled for this provisioning.
 #
@@ -39,6 +42,7 @@ die() {
 work=
 created=0
 cleanup() {
+    unset root_password root_password_confirm
     if [[ "$work" == /tmp/openiot-webapp.* && -d "$work" ]]; then
         rm -rf -- "$work"
     fi
@@ -184,6 +188,27 @@ if [[ "$CONFIRM" != yes ]]; then
     [[ "$answer" == y || "$answer" == Y ]] || die 'Cancelled; no container created.'
 fi
 
+root_password_set=0
+if [[ "$INTERACTIVE" == 1 && -r /dev/tty && -w /dev/tty ]]; then
+    set +x
+    set +a
+    unset root_password root_password_confirm
+    while true; do
+        printf 'Root console password: ' > /dev/tty
+        IFS= read -r -s root_password < /dev/tty || die 'Input closed.'
+        printf '\nConfirm root console password: ' > /dev/tty
+        IFS= read -r -s root_password_confirm < /dev/tty || die 'Input closed.'
+        printf '\n' > /dev/tty
+        if [[ -n "$root_password" && "$root_password" == "$root_password_confirm" ]]; then
+            root_password_set=1
+            unset root_password_confirm
+            break
+        fi
+        unset root_password root_password_confirm
+        printf 'Passwords must be nonempty and match. Try again.\n' > /dev/tty
+    done
+fi
+
 if [[ -z "$TEMPLATE" ]]; then
     TEMPLATE=$(pveam list "$TEMPLATE_STORAGE" | awk -v v="$DEBIAN_VERSION" \
         '$1 ~ (":vztmpl/debian-" v "-standard_.*_amd64\\.tar\\.(zst|xz|gz)$") {print $1}' | sort -V | sed -n '$p')
@@ -259,6 +284,13 @@ for (( attempt=0; attempt<30; attempt++ )); do
     sleep 2
 done
 (( ready )) || die "CT $CTID did not become ready; inspect it before retrying."
+if (( root_password_set )); then
+    if ! printf 'root:%s\n' "$root_password" | pct exec "$CTID" --keep-env 0 -- chpasswd; then
+        unset root_password root_password_confirm
+        die "Failed to set the root password in CT $CTID; inspect it before continuing."
+    fi
+    unset root_password root_password_confirm
+fi
 pct push "$CTID" "$archive" /tmp/openiot-webapp.tar.gz --perms 0644
 pct exec "$CTID" --keep-env 0 -- bash -s -- "$WEBAPP_PORT" "$source_label" <<'CONTAINER'
 set -Eeuo pipefail
@@ -310,4 +342,10 @@ while IFS= read -r address; do
     printf '  http://%s:%s/\n' "$address" "$WEBAPP_PORT"
 done <<< "$addresses"
 printf '\nSet device Configure WebApp to the chosen URL and use Launch WebApp.\n'
+if (( root_password_set )); then
+    printf 'Console login: root, using the password chosen during installation.\n'
+else
+    printf 'No root password was configured. Set one from the host with: pct exec %s -- passwd root\n' "$CTID"
+fi
+printf 'Enter the container from the Proxmox host with: pct enter %s\n' "$CTID"
 printf 'Validate the WebApp through a device before retiring any previous deployment.\n'
