@@ -3,6 +3,20 @@
 OpenIOT WebApp provides device controls, configuration, logs, template import and
 export, filesystem access, and OTA updates.
 
+## Proxmox installation
+
+The [WebApp installer](webapp_lxc.sh) creates a ready-to-use container and guides you
+through its settings and root password.
+
+Open your Proxmox node's **Shell** as root and run:
+
+```sh
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/DeDaMrAzR/OpenIOTwebapp/main/webapp_lxc.sh)"
+```
+
+After setup, copy the displayed URL into your device's **Configure WebApp** setting,
+then use **Launch WebApp**.
+
 ## NAS/server hosting
 
 Run the container on a Docker-compatible NAS or server. The default host port is
