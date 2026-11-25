@@ -246,6 +246,9 @@ create_options=(--hostname "$CT_HOSTNAME" --unprivileged 1 --cores "$CORES"
 printf 'Creating CT %s from %s; source: %s\n' "$CTID" "$TEMPLATE" "$PWD"
 pct create "$CTID" "$TEMPLATE" "${create_options[@]}"
 created=1
+ct_config=$(pct config "$CTID")
+grep -Fxq 'unprivileged: 1' <<< "$ct_config" || die "CT $CTID is not confirmed unprivileged; refusing to start. Inspect with: pct config $CTID"
+printf 'Confirmed CT %s is unprivileged.\n' "$CTID"
 pct start "$CTID"
 ready=0
 for (( attempt=0; attempt<30; attempt++ )); do
@@ -277,7 +280,10 @@ chmod 0644 /etc/openiot-webapp-source
 chown -R root:root /srv/webapp
 find /srv/webapp -type d -exec chmod 0755 {} +
 find /srv/webapp -type f -exec chmod 0644 {} +
+install -d -m 0755 /var/log/nginx
 sed -e 's|^pid /tmp/nginx.pid;$|pid /run/nginx.pid;|' \
+    -e 's|^error_log /dev/stderr warn;$|error_log /var/log/nginx/error.log warn;|' \
+    -e 's|^    access_log /dev/stdout;$|    access_log /var/log/nginx/access.log;|' \
     -e "s|^        listen 8080;$|        listen $port;|" \
     /srv/webapp/nginx.conf > /etc/nginx/nginx.conf
 rm -- /srv/webapp/nginx.conf
