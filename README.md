@@ -8,6 +8,14 @@ export, filesystem access, and OTA updates.
 The [WebApp installer](webapp_lxc.sh) creates a ready-to-use container and guides you
 through its settings and root password.
 
+Default container resources:
+
+| Resource | Allocation |
+|---|---|
+| CPU | 1 core |
+| RAM | 256 MB |
+| Disk | 2 GB |
+
 Open your Proxmox node's **Shell** as root and run:
 
 ```sh
